@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Interativo: Processador de Texto</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: "Soothing Sage and Warm Sand" -->
+    <!-- Application Structure Plan: A mission-based, interactive dashboard structure is used instead of a linear document. This gamified approach is more engaging for 9th-grade students. The user starts at a "Painel de Controlo" with an overview chart, then selects "Missões" (units) from a top navigation bar. Selecting a mission reveals its content in the main area, presented as interactive cards (e.g., flip cards for shortcuts, tabbed sections). This structure encourages active exploration over passive reading. -->
+    <!-- Visualization & Content Choices: 
+        - Unit hour distribution -> Goal: Compare -> Viz: Interactive horizontal bar chart -> Interaction: Hover tooltips -> Justification: Clear comparison of time investment. -> Library: Chart.js.
+        - Manual structure flowchart -> Goal: Organize -> Viz: HTML/CSS flowchart -> Interaction: Hover highlights -> Justification: Native, responsive, avoids images/SVG. -> Method: HTML/CSS/Tailwind.
+        - Keyboard shortcuts -> Goal: Inform/Engage -> Viz: Interactive flip cards -> Interaction: Click to reveal -> Justification: Active recall aids memorization. -> Method: HTML/CSS/JS.
+        - Paragraph formatting -> Goal: Organize/Inform -> Viz: Tabbed content card -> Interaction: Click tabs -> Justification: Groups related info cleanly. -> Method: HTML/CSS/JS.
+        - Long document features -> Goal: Explain -> Viz: Mock document layout -> Interaction: Buttons to toggle features -> Justification: Makes abstract concepts tangible. -> Method: HTML/CSS/JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #FDFBF8; }
+        .nav-link { transition: all 0.3s ease; }
+        .nav-link.active { color: #3A8A83; border-bottom-color: #3A8A83; font-weight: 600; }
+        .mission-card { background-color: #FFFFFF; border: 1px solid #EAEAEA; border-radius: 12px; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .mission-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .flip-card { perspective: 1000px; cursor: pointer; }
+        .flip-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+        .flip-card-front, .flip-card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 1rem; border-radius: 0.5rem; }
+        .flip-card-front { background-color: #E6F3F2; color: #3A8A83; }
+        .flip-card-back { background-color: #3A8A83; color: white; transform: rotateY(180deg); }
+        .flowchart-box { border: 2px solid #D1D5DB; transition: all 0.3s ease; }
+        .flowchart-box:hover { border-color: #3A8A83; background-color: #F0FAF9; }
+        .chart-container { position: relative; width: 100%; max-width: 800px; margin-left: auto; margin-right: auto; height: 400px; max-height: 50vh; }
+        @media (max-width: 768px) { .chart-container { height: 300px; max-height: 60vh; } }
+        .tab.active { border-bottom-color: #3A8A83; color: #3A8A83; }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4 border-b border-gray-200">
+                <h1 class="text-xl md:text-2xl font-bold text-[#3A8A83]">Processador de Texto: A Aventura</h1>
+            </div>
+            <div id="navigation" class="flex flex-wrap justify-center md:justify-start gap-4 md:gap-6 py-3 overflow-x-auto">
+            </div>
+        </nav>
+    </header>
+
+    <main id="main-content" class="container mx-auto p-4 md:p-8">
+    </main>
+    
+    <footer class="text-center py-6 mt-8 border-t border-gray-200 bg-white">
+        <p class="text-gray-500 text-sm">Manual Interativo desenvolvido para o curso de Operador de Informática.</p>
+    </footer>
+
+    <script>
+        const contentData = {
+            dashboard: {
+                id: 'dashboard',
+                title: 'Painel de Controlo',
+                intro: `Bem-vindo à sua jornada para dominar o Processador de Texto! Esta aplicação interativa transforma o manual da UFCD 0754 numa série de missões. Comece por explorar o nosso painel de controlo para ter uma visão geral do curso. Depois, navegue pelas missões para aprender e praticar novas competências, desde o básico até às funcionalidades mais avançadas.`,
+                chartData: {
+                    labels: ['Introdução', 'Operações básic.', 'Formatações', 'Edição/revisão', 'Impressão', 'Tab/tab/colunas', 'Aspeto visual', 'Docs longos', 'Percorrer doc'],
+                    values: [6, 8, 10, 6, 4, 8, 6, 8, 6]
+                },
+                structure: [
+                    { name: 'Introdução', color: 'yellow-300' },
+                    { name: 'Funcionalidades', color: 'cyan-300' },
+                    { name: 'Editar Documentos', color: 'orange-300' },
+                    { name: 'Formatação', color: 'lime-300', children: true },
+                    { name: 'Revisores de Texto', color: 'pink-300', children: true },
+                    { name: '9º ANO', color: 'sky-300', isEnd: true }
+                ]
+            },
+            missions: [
+                {
+                    id: 'mission1',
+                    title: 'Missão 1: Primeiros Passos',
+                    duration: 6,
+                    intro: 'Nesta primeira missão, vamos desvendar os segredos iniciais do processador de texto. Irá familiarizar-se com o ambiente de trabalho e aprender a navegar como um verdadeiro explorador digital.',
+                    cards: [
+                        { type: 'concept', title: 'O que é um Processador de Texto?', content: 'É uma aplicação que permite criar, editar, formatar e imprimir documentos. O Microsoft Word é o mais popular e será o nosso companheiro nesta aventura!' },
+                        { type: 'interface', title: 'A Interface do Word', elements: [
+                            { name: 'Friso (Ribbon)', desc: 'Onde encontras todos os comandos e ferramentas, organizados por separadores.', icon: '📜' },
+                            { name: 'Área de Documento', desc: 'A tua tela em branco, pronta para as tuas ideias.', icon: '📄' },
+                            { name: 'Barra de Estado', desc: 'Informa sobre o número de páginas, palavras e idioma.', icon: '📊' },
+                        ]},
+                        { type: 'tabs', title: 'Modos de Visualização', tabs: [
+                            { name: 'Impressão', content: 'Mostra o documento exatamente como será impresso. É o modo mais usado.' },
+                            { name: 'Leitura', content: 'Otimizado para ler no ecrã, sem distrações.' },
+                            { name: 'Web', content: 'Vê como o teu documento ficaria numa página de internet.' },
+                        ]}
+                    ]
+                },
+                {
+                    id: 'mission2',
+                    title: 'Missão 2: Operações Essenciais',
+                    duration: 8,
+                    intro: 'Agora que já conheces o território, está na hora de aprender os movimentos básicos. Esta missão foca-se nas operações fundamentais que usarás em todos os teus trabalhos.',
+                    cards: [
+                        { type: 'shortcuts', title: 'Gestão de Documentos', items: [
+                            { front: 'Criar Novo', back: 'Ctrl + N' },
+                            { front: 'Abrir', back: 'Ctrl + A' },
+                            { front: 'Guardar', back: 'Ctrl + G' },
+                        ]},
+                        { type: 'shortcuts', title: 'Edição Rápida', items: [
+                            { front: 'Copiar', back: 'Ctrl + C' },
+                            { front: 'Cortar', back: 'Ctrl + X' },
+                            { front: 'Colar', back: 'Ctrl + V' },
+                            { front: 'Anular', back: 'Ctrl + Z' },
+                        ]},
+                        { type: 'concept', title: 'Técnicas de Seleção', content: '<strong>Palavra:</strong> Duplo clique. <br><strong>Parágrafo:</strong> Triplo clique. <br><strong>Todo o texto:</strong> Ctrl + T. <br>Usa estas técnicas para editares o texto mais rapidamente!' }
+                    ]
+                },
+                {
+                    id: 'mission3',
+                    title: 'Missão 3: Dar Vida ao Texto',
+                    duration: 10,
+                    intro: 'Texto simples é aborrecido! Nesta missão, vais aprender a usar formatações para dar estilo e personalidade aos teus documentos, destacando a informação mais importante.',
+                    cards: [
+                        { type: 'tabs', title: 'Formatar Caracteres', tabs: [
+                            { name: 'Tipo de Letra', content: 'Define a "personalidade" do teu texto. Exemplos: Arial, Calibri, Times New Roman.'},
+                            { name: 'Tamanho', content: 'Mede-se em pontos (pt). Aumenta o tamanho para títulos e diminui para notas.'},
+                            { name: 'Estilo', content: 'Usa <strong>Negrito</strong> para dar ênfase, <em>Itálico</em> para citações e <u>Sublinhado</u> para links.'},
+                            { name: 'Cor', content: 'Usa a cor para destacar ou organizar visualmente a informação.'}
+                        ]},
+                        { type: 'tabs', title: 'Formatar Parágrafos', tabs: [
+                            { name: 'Alinhamento', content: 'Alinha à esquerda (padrão), ao centro (títulos), à direita ou justificado (para um aspeto de "livro").'},
+                            { name: 'Espaçamento', content: 'Controla o espaço entre as linhas e entre parágrafos para melhorar a legibilidade.'},
+                            { name: 'Listas', content: 'Organiza ideias com listas numeradas (para passos) ou com marcadores (para itens).'}
+                        ]}
+                    ]
+                },
+                {
+                    id: 'mission4',
+                    title: 'Missão 4: O Revisor Mestre',
+                    duration: 6,
+                    intro: 'Nenhum texto está perfeito à primeira. Nesta missão, vais aprender a usar as ferramentas de revisão do Word para encontrar erros, substituir palavras e garantir que o teu trabalho está impecável.',
+                    cards: [
+                        { type: 'concept', title: 'Verificação Ortográfica', content: 'O Word sublinha a vermelho palavras que não conhece. Clica com o botão direito para ver sugestões ou prime F7 para uma revisão completa. Não confies cegamente, por vezes a sugestão está errada!' },
+                        { type: 'shortcuts', title: 'Localizar e Substituir', items: [
+                            { front: 'Localizar', back: 'Ctrl + L' },
+                            { front: 'Substituir', back: 'Ctrl + H' },
+                        ]},
+                        { type: 'concept', title: 'Dicionário de Sinónimos', content: 'Repetiste muito uma palavra? Seleciona-a e prime Shift + F7 para encontrar alternativas e enriquecer o teu texto.' }
+                    ]
+                },
+                 {
+                    id: 'mission5',
+                    title: 'Missão 5: Da Tela ao Papel',
+                    duration: 4,
+                    intro: 'Criar um documento digital é só o início. Nesta missão rápida, vais aprender a preparar o teu trabalho para o mundo real, configurando a página e imprimindo-o na perfeição.',
+                    cards: [
+                        { type: 'tabs', title: 'Configuração da Página', tabs: [
+                            { name: 'Tamanho', content: 'O mais comum é A4, mas podes escolher outros tamanhos como A5 ou envelopes.'},
+                            { name: 'Orientação', content: 'Retrato (vertical) é o padrão. Paisagem (horizontal) é ótimo para tabelas largas ou diplomas.'},
+                            { name: 'Margens', content: 'Define o espaço em branco à volta do teu texto. As margens padrão costumam funcionar bem.'}
+                        ]},
+                        { type: 'concept', title: 'Pré-visualizar e Imprimir', content: 'Usa sempre a pré-visualização (Ctrl + P) antes de imprimir! Poupa papel e verifica se está tudo como queres. Podes escolher a impressora, quantas cópias e que páginas imprimir.'}
+                    ]
+                },
+                {
+                    id: 'mission6',
+                    title: 'Missão 6: Organização Estruturada',
+                    duration: 8,
+                    intro: 'Informação desorganizada é difícil de ler. Nesta missão, vais dominar tabelas e colunas, duas ferramentas poderosas para apresentar dados e criar layouts de estilo profissional, como em jornais ou revistas.',
+                     cards: [
+                        { type: 'tabs', title: 'Tabelas', tabs: [
+                            { name: 'Criação', content: 'Vai a Inserir > Tabela e escolhe o número de linhas e colunas. É a forma mais fácil de organizar dados.' },
+                            { name: 'Formatação', content: 'Depois de criar, aparece um novo separador "Design da Tabela". Explora os estilos prontos para dar um ar profissional à tua tabela com apenas um clique.'}
+                        ]},
+                        { type: 'concept', title: 'Colunas de Texto', content: 'Queres um layout tipo jornal? Vai a Layout > Colunas e divide o teu texto. É perfeito para folhetos e artigos.' }
+                    ]
+                },
+                {
+                    id: 'mission7',
+                    title: 'Missão 7: O Toque Artístico',
+                    duration: 6,
+                    intro: 'Uma imagem vale mais que mil palavras. Nesta missão criativa, vais aprender a enriquecer os teus documentos com elementos visuais como imagens, formas e caixas de texto para captar a atenção do leitor.',
+                     cards: [
+                        { type: 'concept', title: 'Inserir Imagens e Formas', content: 'Usa o separador "Inserir" para adicionar imagens do teu computador ou formas (círculos, setas, etc.). Depois de inserires, clica na imagem/forma para ver as opções de formatação.' },
+                        { type: 'concept', title: 'Caixas de Texto', content: 'São ideais para destacar citações ou informações importantes. Podes movê-las livremente pela página!' }
+                    ]
+                },
+                {
+                    id: 'mission8',
+                    title: 'Missão 8: Os Grandes Projetos',
+                    duration: 8,
+                    intro: 'Trabalhar em documentos longos, como relatórios ou trabalhos escolares, exige organização. Nesta missão, vais aprender a usar ferramentas essenciais para manter a consistência e a estrutura em grandes projetos.',
+                    cards: [
+                        { type: 'tabs', title: 'Documentos Longos', tabs: [
+                            { name: 'Cabeçalhos e Rodapés', content: 'São áreas no topo e no fundo de cada página. Perfeitos para adicionar o teu nome, o título do trabalho ou o número da página.' },
+                            { name: 'Numeração de Página', content: 'Insere números de página automáticos. O Word faz o trabalho por ti!' },
+                            { name: 'Estilos', content: 'A ferramenta mais poderosa para documentos longos! Usa estilos (ex: Título 1, Título 2) para formatar todos os teus títulos de uma só vez e manter a consistência.' }
+                        ]}
+                    ]
+                },
+                {
+                    id: 'mission9',
+                    title: 'Missão 9: Navegação Ninja',
+                    duration: 6,
+                    intro: 'A tua jornada está quase no fim! Nesta última missão, vais aprender a mover-te rapidamente em documentos longos e a criar índices automáticos, as habilidades finais de um verdadeiro mestre do Word.',
+                    cards: [
+                        { type: 'concept', title: 'Painel de Navegação', content: 'Prime Ctrl + F. Se usaste estilos nos teus títulos, podes ver a estrutura do teu documento e saltar diretamente para qualquer secção.' },
+                        { type: 'concept', title: 'Índices Automáticos', content: 'A magia dos estilos! Se usaste estilos de título, podes criar um índice completo e profissional em segundos. Vai a Referências > Índice. Se mudares algo, basta atualizá-lo!' },
+                        { type: 'concept', title: 'Notas de Rodapé', content: 'Queres adicionar uma nota ou referência sem interromper o texto? Usa uma nota de rodapé (Ctrl + Alt + D). Fica no fundo da página, de forma organizada.' }
+                    ]
+                }
+            ]
+        };
+
+        let currentView = 'dashboard';
+        const mainContent = document.getElementById('main-content');
+        const navigation = document.getElementById('navigation');
+
+        function renderNavigation() {
+            navigation.innerHTML = `
+                <button class="nav-link text-gray-600 pb-2 border-b-2 border-transparent" data-view="dashboard">Painel de Controlo</button>
+                ${contentData.missions.map(mission => `
+                    <button class="nav-link text-gray-600 pb-2 border-b-2 border-transparent" data-view="${mission.id}">${mission.title.split(':')[0]}</button>
+                `).join('')}
+            `;
+        }
+        
+        function createDashboard() {
+            const data = contentData.dashboard;
+            mainContent.innerHTML = `
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold mb-4 text-gray-800">${data.title}</h2>
+                    <p class="max-w-3xl mx-auto text-gray-600">${data.intro}</p>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                    <div class="mission-card p-4 md:p-6">
+                        <h3 class="font-bold text-xl mb-4 text-center">Horas de Conteúdo por Unidade</h3>
+                        <div class="chart-container">
+                            <canvas id="hoursChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="mission-card p-4 md:p-6">
+                        <h3 class="font-bold text-xl mb-4 text-center">Estrutura do Manual</h3>
+                        <div class="space-y-2 flex flex-col items-center">
+                            ${data.structure.map(item => `
+                                <div class="flowchart-box w-2/3 text-center p-2 rounded-md bg-${item.color} bg-opacity-30 border-${item.color}">
+                                    ${item.name}
+                                </div>
+                                ${!item.isEnd ? '<div class="text-gray-400 text-2xl">↓</div>' : ''}
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            renderChart();
+        }
+
+        function createMissionView(missionId) {
+            const mission = contentData.missions.find(m => m.id === missionId);
+            if (!mission) return;
+
+            mainContent.innerHTML = `
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold mb-2 text-gray-800">${mission.title}</h2>
+                    <span class="text-sm font-semibold text-white bg-[#3A8A83] px-3 py-1 rounded-full">${mission.duration} horas</span>
+                    <p class="max-w-3xl mx-auto text-gray-600 mt-4">${mission.intro}</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    ${mission.cards.map(card => createCard(card)).join('')}
+                </div>
+            `;
+            addCardEventListeners();
+        }
+        
+        function createCard(card) {
+            switch (card.type) {
+                case 'concept':
+                    return `
+                        <div class="mission-card p-6">
+                            <h4 class="font-bold text-lg mb-2 text-[#3A8A83]">${card.title}</h4>
+                            <p class="text-gray-600 text-sm">${card.content}</p>
+                        </div>`;
+                case 'shortcuts':
+                    return `
+                        <div class="mission-card p-6">
+                            <h4 class="font-bold text-lg mb-4 text-center text-[#3A8A83]">${card.title}</h4>
+                            <div class="grid grid-cols-2 gap-4">
+                                ${card.items.map(item => `
+                                    <div class="flip-card h-24">
+                                        <div class="flip-card-inner">
+                                            <div class="flip-card-front"><p class="font-semibold">${item.front}</p></div>
+                                            <div class="flip-card-back"><p class="font-bold text-lg">${item.back}</p></div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>`;
+                case 'interface':
+                     return `
+                        <div class="mission-card p-6">
+                            <h4 class="font-bold text-lg mb-4 text-[#3A8A83]">${card.title}</h4>
+                            <ul class="space-y-3">
+                                ${card.elements.map(el => `
+                                    <li class="flex items-start">
+                                        <span class="text-xl mr-3">${el.icon}</span>
+                                        <div>
+                                            <p class="font-semibold text-gray-700">${el.name}</p>
+                                            <p class="text-gray-500 text-sm">${el.desc}</p>
+                                        </div>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>`;
+                case 'tabs':
+                    return `
+                        <div class="mission-card p-6 md:col-span-2">
+                            <h4 class="font-bold text-lg mb-4 text-[#3A8A83]">${card.title}</h4>
+                            <div class="border-b border-gray-200">
+                                <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+                                    ${card.tabs.map((tab, index) => `
+                                        <button class="tab whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-[#3A8A83] ${index === 0 ? 'active' : ''}" data-tab-content="${card.title.replace(/\s/g, '')}-${index}">
+                                            ${tab.name}
+                                        </button>
+                                    `).join('')}
+                                </nav>
+                            </div>
+                            <div class="mt-4">
+                                ${card.tabs.map((tab, index) => `
+                                    <div class="tab-content text-gray-600 text-sm ${index !== 0 ? 'hidden' : ''}" id="${card.title.replace(/\s/g, '')}-${index}">
+                                        ${tab.content}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>`;
+                default:
+                    return '';
+            }
+        }
+        
+        function renderChart() {
+            const ctx = document.getElementById('hoursChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: contentData.dashboard.chartData.labels,
+                    datasets: [{
+                        label: 'Horas',
+                        data: contentData.dashboard.chartData.values,
+                        backgroundColor: '#85CBB8',
+                        borderColor: '#3A8A83',
+                        borderWidth: 1,
+                        borderRadius: 5,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#3A8A83',
+                            titleFont: { weight: 'bold' },
+                            bodyFont: { weight: 'normal' },
+                            displayColors: false,
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: "'Poppins', sans-serif" } },
+                            title: { display: true, text: 'Horas', font: { weight: '600' } }
+                        },
+                        y: {
+                            grid: { color: '#f0f0f0' },
+                            ticks: { font: { family: "'Poppins', sans-serif" } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateView(viewId) {
+            currentView = viewId;
+            if (viewId === 'dashboard') {
+                createDashboard();
+            } else {
+                createMissionView(viewId);
+            }
+
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.toggle('active', link.dataset.view === viewId);
+            });
+        }
+        
+        function addCardEventListeners() {
+            document.querySelectorAll('.flip-card').forEach(card => {
+                card.addEventListener('click', () => card.classList.toggle('flipped'));
+            });
+
+            document.querySelectorAll('.tab').forEach(tabButton => {
+                tabButton.addEventListener('click', () => {
+                    const parent = tabButton.closest('.mission-card');
+                    parent.querySelectorAll('.tab').forEach(btn => btn.classList.remove('active'));
+                    tabButton.classList.add('active');
+                    parent.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+                    document.getElementById(tabButton.dataset.tabContent).classList.remove('hidden');
+                });
+            });
+        }
+
+        navigation.addEventListener('click', (e) => {
+            if (e.target.matches('.nav-link')) {
+                const viewId = e.target.dataset.view;
+                if (viewId) {
+                    updateView(viewId);
+                }
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderNavigation();
+            updateView('dashboard');
+        });
+
+    </script>
+</body>
+</html>
