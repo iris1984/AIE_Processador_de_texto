@@ -19,7 +19,7 @@
     -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #FDFBF8; }
+         body { font-family: 'Poppins', sans-serif; background-color: #FDFBF8; }
         .nav-link { transition: all 0.3s ease; }
         .nav-link.active { color: #3A8A83; border-bottom-color: #3A8A83; font-weight: 600; }
         .mission-card { background-color: #FFFFFF; border: 1px solid #EAEAEA; border-radius: 12px; transition: transform 0.3s ease, box-shadow 0.3s ease; }
@@ -35,6 +35,7 @@
         .chart-container { position: relative; width: 100%; max-width: 800px; margin-left: auto; margin-right: auto; height: 400px; max-height: 50vh; }
         @media (max-width: 768px) { .chart-container { height: 300px; max-height: 60vh; } }
         .tab.active { border-bottom-color: #3A8A83; color: #3A8A83; }
+         @media (max-width: 600px) {body {font-size: 14px;} .container {flex-direction: column;}}
     </style>
 </head>
 <body class="text-gray-800">
@@ -427,4 +428,5 @@
     </script>
 </body>
 </html>
+
 
